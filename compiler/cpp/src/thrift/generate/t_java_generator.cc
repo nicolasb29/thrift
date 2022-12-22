@@ -79,6 +79,7 @@ public:
     rethrow_unhandled_exceptions_ = false;
     unsafe_binaries_ = false;
     annotations_as_metadata_ = false;
+    javax_annotations_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("beans") == 0) {
         bean_style_ = true;
@@ -127,6 +128,8 @@ public:
         unsafe_binaries_ = true;
       } else if (iter->first.compare("annotations_as_metadata") == 0) {
         annotations_as_metadata_ = true;
+       } else if (iter->first.compare("javax_annotations") == 0) {
+        javax_annotations_ = true;
       } else {
         throw "unknown option java:" + iter->first;
       }
@@ -444,6 +447,7 @@ private:
   bool rethrow_unhandled_exceptions_;
   bool unsafe_binaries_;
   bool annotations_as_metadata_;
+  bool javax_annotations_;
 };
 
 /**
@@ -5738,7 +5742,11 @@ void t_java_generator::generate_java_scheme_lookup(ostream& out) {
 void t_java_generator::generate_javax_generated_annotation(ostream& out) {
   time_t seconds = time(nullptr);
   struct tm* now = localtime(&seconds);
-  indent(out) << "@javax.annotation.Generated(value = \"" << autogen_summary() << "\"";
+  if (!javax_annotations_) {
+    indent(out) << "@jakarta.annotation.Generated(value = \"" << autogen_summary() << "\"";
+  } else {
+    indent(out) << "@javax.annotation.Generated(value = \"" << autogen_summary() << "\"";
+  }
   if (undated_generated_annotations_) {
     out << ")" << endl;
   } else {
@@ -5779,5 +5787,6 @@ THRIFT_REGISTER_GENERATOR(
     "                     undated: suppress the date at @Generated annotations\n"
     "                     suppress: suppress @Generated annotations entirely\n"
     "    unsafe_binaries: Do not copy ByteBuffers in constructors, getters, and setters.\n"
+    "    javax_annotations: generate javax annotations (jakarta by default)\n"
     "    annotations_as_metadata:\n"
     "                     Include Thrift field annotations as metadata in the generated code.\n")
