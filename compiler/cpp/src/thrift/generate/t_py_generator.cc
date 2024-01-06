@@ -607,7 +607,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     int64_t int_val = value->get_integer();
     if (gen_enum_) {
       t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
-      out << type->get_name() << "." << enum_val->get_name();
+      out << type_name(type) << "." << enum_val->get_name();
     } else {
       out << int_val;
     }
@@ -871,7 +871,12 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       }
 
       if (is_immutable(tstruct)) {
-        if (gen_newstyle_ || gen_dynamic_) {
+        if (gen_enum_ && type->is_enum()) {
+          indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
+                      << (*m_iter)->get_name() << "', " << (*m_iter)->get_name()
+                      << " if hasattr("  << (*m_iter)->get_name() << ", 'value') else "
+                      << type_name(type) << ".__members__.get(" << (*m_iter)->get_name() << "))" << endl;
+        } else if (gen_newstyle_ || gen_dynamic_) {
           indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << endl;
         } else {
@@ -888,12 +893,42 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
 
   if (is_immutable(tstruct)) {
     out << endl;
-    out << indent() << "def __setattr__(self, *args):" << endl
-        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
-        << endl;
-    out << indent() << "def __delattr__(self, *args):" << endl
-        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
-        << endl;
+    out << indent() << "def __setattr__(self, *args):" << endl;
+    indent_up();
+
+    // Not user-provided fields should be editable so that the Python Standard Library can edit
+    // internal fields of std library base classes. For example, in Python 3.11 ContextManager
+    // edits the `__traceback__` field on Exceptions. Allowing this to work with `__slots__` is
+    // trivial because we know which fields are user-provided, without slots we need to build a
+    // way to know which fields are user-provided.
+    if (gen_slots_ && !gen_dynamic_) {
+        out << indent() << "if args[0] not in self.__slots__:" << endl;
+        indent_up();
+        out << indent() << "super().__setattr__(*args)" << endl
+            << indent() << "return" << endl;
+        indent_down();
+    }
+    out << indent() << "raise TypeError(\"can't modify immutable instance\")" << endl;
+    indent_down();
+    out << endl;
+    out << indent() << "def __delattr__(self, *args):" << endl;
+    indent_up();
+
+    // Not user-provided fields should be editable so that the Python Standard Library can edit
+    // internal fields of std library base classes. For example, in Python 3.11 ContextManager
+    // edits the `__traceback__` field on Exceptions. Allowing this to work with `__slots__` is
+    // trivial because we know which fields are user-provided, without slots we need to build a
+    // way to know which fields are user-provided.
+    if (gen_slots_ && !gen_dynamic_) {
+        out << indent() << "if args[0] not in self.__slots__:" << endl;
+        indent_up();
+        out << indent() << "super().__delattr__(*args)" << endl
+            << indent() << "return" << endl;
+        indent_down();
+    }
+    out << indent() << "raise TypeError(\"can't modify immutable instance\")" << endl;
+    indent_down();
+    out << endl;
 
     // Hash all of the members in order, and also hash in the class
     // to avoid collisions for stuff like single-field structures.
@@ -905,6 +940,32 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     }
 
     out << "))" << endl;
+  } else if (gen_enum_) {
+    bool has_enum = false;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* type = (*m_iter)->get_type();
+      if (type->is_enum()) {
+        has_enum = true;
+        break;
+      }
+    }
+
+    if (has_enum) {
+      out << endl;
+      indent(out) << "def __setattr__(self, name, value):" << endl;
+      indent_up();
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        t_type* type = (*m_iter)->get_type();
+        if (type->is_enum()) {
+          out << indent() << "if name == \"" << (*m_iter)->get_name() << "\":" << endl
+              << indent() << indent_str() << "super().__setattr__(name, value if hasattr(value, 'value') else "
+              << type_name(type) << ".__members__.get(value))" << endl
+              << indent() << indent_str() << "return" << endl;
+        }
+      }
+      indent(out) << "super().__setattr__(name, value)" << endl << endl;
+      indent_down();
+    }
   }
 
   if (!gen_dynamic_) {
@@ -2287,7 +2348,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     out << endl;
   } else if (type->is_enum()) {
     if (gen_enum_) {
-      indent(out) << name << " = " << type_name(type) << "(iprot.readI32()).name";
+      indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
     } else {
       indent(out) << name << " = iprot.readI32()";
     }
@@ -2477,7 +2538,7 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
       }
     } else if (type->is_enum()) {
       if (gen_enum_){
-        out << "writeI32(" << type_name(type) << "[" << name << "].value)";
+        out << "writeI32(" << name << ".value)";
       } else {
         out << "writeI32(" << name << ")";
       }
