@@ -41,7 +41,7 @@ uses
 
 
 type
-  TCalculatorHandler = class( TInterfacedObject, TSharedService.Iface, TCalculator.Iface)
+  TCalculatorHandler = class( TInterfacedObject, TCalculator.Iface)
   protected
     FLog : TDictionary< Integer, ISharedStruct>;
 

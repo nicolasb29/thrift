@@ -41,16 +41,10 @@
 
 % TApplicationException
 -define(TApplicationException_Structure,
-    {struct, [
-        {1, string},
-        {2, i32}
-    ]}
-).
+        {struct, [{1, string},
+                  {2, i32}]}).
 
--record('TApplicationException', {
-    message :: string(),
-    type :: integer()
-}).
+-record('TApplicationException', {message, type}).
 
 -define(TApplicationException_UNKNOWN, 0).
 -define(TApplicationException_UNKNOWN_METHOD, 1).
@@ -64,5 +58,5 @@
 -define(TApplicationException_INVALID_PROTOCOL, 9).
 -define(TApplicationException_UNSUPPORTED_CLIENT_TYPE, 10).
 
--define(MULTIPLEXED_SERVICE_SEPARATOR, ":").
--define(MULTIPLEXED_ERROR_HANDLER_KEY, "error_handler").
+-define (MULTIPLEXED_SERVICE_SEPARATOR, ":").
+-define (MULTIPLEXED_ERROR_HANDLER_KEY, "error_handler").

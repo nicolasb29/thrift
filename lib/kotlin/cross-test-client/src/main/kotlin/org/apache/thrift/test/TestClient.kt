@@ -101,12 +101,9 @@ class TestClient : CliktCommand() {
 
     private fun createProtocol(transport: TTransport): TProtocol =
         when (protocolType) {
-            ProtocolType.Binary,
-            ProtocolType.Multi -> TBinaryProtocol(transport)
-            ProtocolType.Compact,
-            ProtocolType.MultiCompact -> TCompactProtocol(transport)
-            ProtocolType.Json,
-            ProtocolType.MultiJson -> TJSONProtocol(transport)
+            ProtocolType.Binary, ProtocolType.Multi -> TBinaryProtocol(transport)
+            ProtocolType.Compact, ProtocolType.MultiCompact -> TCompactProtocol(transport)
+            ProtocolType.Json, ProtocolType.MultiJson -> TJSONProtocol(transport)
         }
 
     private fun createTransport(): TNonblockingTransport =
@@ -286,8 +283,7 @@ class TestClient : CliktCommand() {
                     if (whoa.size == 2 && whoa.containsKey(1L) && whoa.containsKey(2L)) {
                         val firstMap = whoa[1L]!!
                         val secondMap = whoa[2L]!!
-                        if (
-                            firstMap.size == 2 &&
+                        if (firstMap.size == 2 &&
                                 firstMap.containsKey(Numberz.TWO) &&
                                 firstMap.containsKey(Numberz.THREE) &&
                                 secondMap.size == 1 &&
@@ -365,8 +361,7 @@ class TestClient : CliktCommand() {
 
     private suspend fun multiplexTest(returnCode: Int): Int {
         var code = returnCode
-        if (
-            protocolType == ProtocolType.Multi ||
+        if (protocolType == ProtocolType.Multi ||
                 protocolType == ProtocolType.MultiJson ||
                 protocolType == ProtocolType.MultiCompact
         ) {
@@ -579,8 +574,7 @@ private suspend fun ThriftTestClient.nestedMapTest(returnCode: Int): Int {
     } else {
         val m1 = mm[4]!!
         val m2 = mm[-4]!!
-        if (
-            m1[1] != 1 ||
+        if (m1[1] != 1 ||
                 m1[2] != 2 ||
                 m1[3] != 3 ||
                 m1[4] != 4 ||

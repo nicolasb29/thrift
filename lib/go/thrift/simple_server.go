@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -355,13 +354,7 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
 		if errors.Is(err, ErrAbandonRequest) {
-			err := client.Close()
-			if errors.Is(err, net.ErrClosed) {
-				// In this case, it's kinda expected to get
-				// net.ErrClosed, treat that as no-error
-				return nil
-			}
-			return err
+			return client.Close()
 		}
 		if errors.As(err, new(TTransportException)) && err != nil {
 			return err

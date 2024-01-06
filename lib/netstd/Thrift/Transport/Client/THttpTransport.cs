@@ -150,10 +150,10 @@ namespace Thrift.Transport.Client
 
             try
             {
-#if NET5_0_OR_GREATER
-                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
-#else
+#if NETSTANDARD2_0
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+#else
+                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
 #endif
                 if (ret == -1)
                 {
@@ -173,10 +173,10 @@ namespace Thrift.Transport.Client
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-#if NET5_0_OR_GREATER
-            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
-#else
+#if NETSTANDARD2_0
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+#else
+            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
 #endif
         }
 
@@ -245,10 +245,10 @@ namespace Thrift.Transport.Client
                     var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
 
                     _inputStream?.Dispose();
-#if NET5_0_OR_GREATER
-                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-#else
+#if NETSTANDARD2_0 || NETSTANDARD2_1
                     _inputStream = await response.Content.ReadAsStreamAsync();
+#else
+                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 #endif
                     if (_inputStream.CanSeek)
                     {

@@ -76,7 +76,6 @@ public:
     xmldoc_ = false;
     async_ = false;
     com_types_ = false;
-    rtti_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("ansistr_binary") == 0) {
         ansistr_binary_ = true;
@@ -94,8 +93,6 @@ public:
         async_ = true;
       } else if( iter->first.compare("com_types") == 0) {
         com_types_ = true;
-      } else if( iter->first.compare("rtti") == 0) {
-        rtti_ = true;
       } else {
         throw "unknown option delphi:" + iter->first;
       }
@@ -475,7 +472,6 @@ private:
   bool xmldoc_;
   bool async_;
   bool com_types_;
-  bool rtti_;
   void indent_up_impl() { ++indent_impl_; };
   void indent_down_impl() { --indent_impl_; };
   std::string indent_impl() {
@@ -724,14 +720,10 @@ void t_delphi_generator::close_generator() {
   f_all << autogen_comment() << endl;
   generate_delphi_doc(f_all, program_);
   f_all << "unit " << unitname << ";" << endl << endl;
-  f_all << "{$WARN SYMBOL_DEPRECATED OFF}" << endl;
+  f_all << "{$WARN SYMBOL_DEPRECATED OFF}" << endl << endl;
   if(com_types_) {
-    f_all << "{$MINENUMSIZE 4}" << endl;
+    f_all << "{$MINENUMSIZE 4}" << endl << endl;
   }
-  if(rtti_) {
-    f_all << "{$IFOPT M+} {$DEFINE TYPEINFO_WAS_ON} {$ELSE} {$UNDEF TYPEINFO_WAS_ON} {$ENDIF}" << endl;
-  }
-  f_all << endl;
   f_all << "interface" << endl << endl;
   f_all << "uses" << endl;
 
@@ -767,7 +759,6 @@ void t_delphi_generator::close_generator() {
   indent(f_all) << "c" << tmp_unit << "_Option_Async          = " << (async_ ? "True" : "False") << ";" << endl;
   indent(f_all) << "c" << tmp_unit << "_Option_COM_types      = " << (com_types_ ? "True" : "False") << ";" << endl;
   indent(f_all) << "c" << tmp_unit << "_Option_Old_Names      = " << (old_names_ ? "True" : "False") << ";" << endl;
-  indent(f_all) << "c" << tmp_unit << "_Option_RTTI           = " << (rtti_ ? "True" : "False") << ";" << endl;
   indent_down();
 
   f_all << endl;
@@ -1670,13 +1661,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   if ((!is_exception) || is_x_factory) {
 
     generate_delphi_doc(out, tstruct);
-    if(rtti_) {
-      indent(out) << "{$TYPEINFO ON}" << endl;
-      indent(out) << "{$RTTI EXPLICIT METHODS([vcPublic, vcPublished]) PROPERTIES([vcPublic, vcPublished])}" << endl;
-      indent(out) << struct_intf_name << " = interface(IBaseWithTypeInfo)" << endl;
-    } else {
-      indent(out) << struct_intf_name << " = interface(IBase)" << endl;
-    }
+    indent(out) << struct_intf_name << " = interface(IBase)" << endl;
     indent_up();
 
     generate_guid(out);
@@ -1720,11 +1705,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     }
 
     indent_down();
-    indent(out) << "end;" << endl;
-    if(rtti_) {
-      indent(out) << "{$IFNDEF TYPEINFO_WAS_ON} {$TYPEINFO OFF} {$ENDIF}" << endl;
-    }
-    indent(out) << endl;
+    indent(out) << "end;" << endl << endl;
   }
 
   generate_delphi_doc(out, tstruct);
@@ -3179,15 +3160,13 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
     return "";
   case t_base_type::TYPE_STRING:
     if (tbase->is_binary()) {
-      if (ansistr_binary_)
+      if (ansistr_binary_) {
         return "System.AnsiString";
-      if( com_types_)
-        return "IThriftBytes";
-      if( rtti_)
-        return "Thrift.Protocol.TThriftBytes";  // has TypeInfo
-      return  "SysUtils.TBytes";
+      } else {
+        return com_types_ ? "IThriftBytes" : "SysUtils.TBytes";
+      }
     } else {
-      return com_types_ ? "System.WideString" : "System.UnicodeString";
+      return com_types_ ? "System.WideString" : "System.string";
     }
   case t_base_type::TYPE_UUID:
     return "System.TGuid";
@@ -4079,5 +4058,4 @@ THRIFT_REGISTER_GENERATOR(
     "    xmldoc:          Enable XMLDoc comments for Help Insight etc.\n"
     "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n"
     "    com_types:       Use COM-compatible data types (e.g. WideString).\n"
-    "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n"
-    "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n")
+    "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n")

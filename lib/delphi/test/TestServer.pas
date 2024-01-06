@@ -55,7 +55,7 @@ type
         procedure TestStop;
       end;
 
-      TTestHandlerImpl = class( TInterfacedObject, ITestHandler, TThriftTest.Iface)
+      TTestHandlerImpl = class( TInterfacedObject, ITestHandler )
       strict private
         FServer : IServer;
       strict protected

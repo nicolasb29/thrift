@@ -19,9 +19,7 @@
 
 -module(thrift_service).
 
-%%%=========================================================================
-%%%  API
-%%%=========================================================================
+-export([behaviour_info/1]).
 
-%% TODO Replace response with type
--callback function_info(atom(), atom()) -> {struct, term()}.
+behaviour_info(callbacks) ->
+    [{function_info, 2}].

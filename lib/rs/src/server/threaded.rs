@@ -183,7 +183,6 @@ where
         for stream in listener.incoming() {
             match stream {
                 Ok(s) => {
-                    s.set_nodelay(true).ok();
                     let channel = TTcpChannel::with_stream(s);
                     self.handle_stream(channel)?;
                 }

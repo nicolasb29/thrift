@@ -19,6 +19,9 @@
 
 package org.apache.thrift.helper;
 
+import Map;
+
+
 class StringSet {
 
     private var _elements = new haxe.ds.StringMap<Int>();
@@ -27,7 +30,9 @@ class StringSet {
 
     public function new( values : Array<String> = null) {
         if ( values != null) {
-            addRange(values.iterator());
+            for ( value in values) {
+                 add(value);
+            }
         }
     }
 
@@ -50,14 +55,6 @@ class StringSet {
         _size++;
         _elements.set(o,_size);
         return true;
-    }
-
-    public function addRange( values : Iterator<String>) {
-        if ( values != null) {
-            for ( value in values) {
-                 add(value);
-            }
-        }
     }
 
     public function clear() : Void {

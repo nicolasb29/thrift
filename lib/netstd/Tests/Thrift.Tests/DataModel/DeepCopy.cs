@@ -59,7 +59,7 @@ namespace Thrift.Tests.DataModel
             return instance;
         }
 
-        private jack.nested_struct? MakeNestedUnion(int nesting)
+        private jack? MakeNestedUnion(int nesting)
         {
             if (++nesting > 1)
                 return null;
@@ -148,14 +148,14 @@ namespace Thrift.Tests.DataModel
 
             if (nesting < 2)
             {
-                instance.Far_list = [Distance.foo, Distance.bar, Distance.baz];
-                instance.Far_set = [Distance.foo, Distance.bar, Distance.baz];
-                instance.Far_map = new() { [Distance.foo] = Distance.foo, [Distance.bar] = Distance.bar, [Distance.baz] = Distance.baz };
+                instance.Far_list = new List<Distance>() { Distance.foo, Distance.bar, Distance.baz };
+                instance.Far_set = new HashSet<Distance>() { Distance.foo, Distance.bar, Distance.baz };
+                instance.Far_map = new Dictionary<Distance, Distance>() { [Distance.foo] = Distance.foo, [Distance.bar] = Distance.bar, [Distance.baz] = Distance.baz };
 
-                instance.Far_set_list = [[Distance.foo]];
-                instance.Far_list_map_set = [new Dictionary<sbyte, HashSet<Distance>>() { [1] = [Distance.baz] }];
+                instance.Far_set_list = new HashSet<List<Distance>>() { new List<Distance>() { Distance.foo } };
+                instance.Far_list_map_set = new List<Dictionary<sbyte, HashSet<Distance>>>() { new Dictionary<sbyte, HashSet<Distance>>() { [1] = new HashSet<Distance>() { Distance.baz } } };
 
-                instance.Far_map_dist_to_rds = new() { [Distance.bar] = []  };
+                instance.Far_map_dist_to_rds = new Dictionary<Distance, List<RaceDetails>>() { [Distance.bar] = new List<RaceDetails>()  };
                 var details = MakeNestedRaceDetails(nesting);
                 if (details != null)
                     instance.Far_map_dist_to_rds[Distance.bar].Add(details);
@@ -265,7 +265,8 @@ namespace Thrift.Tests.DataModel
             if (++level > 4)
                 return value;
 
-            value ??= MakeNestedUnion(0);
+            if (value == null)
+                value = MakeNestedUnion(0);
             Debug.Assert(value?.As_nested_struct != null);
             ModifyInstance(value.As_nested_struct, level);
             return value;
@@ -276,21 +277,23 @@ namespace Thrift.Tests.DataModel
             if (++level > 4)
                 return value;
 
-            value ??= new RaceDetails();
+            if (value == null)
+                value = new RaceDetails();
             ModifyInstance(value,level);
             return value;
         }
 
         private Dictionary<Distance, List<RaceDetails>> ModifyValue(Dictionary<Distance, List<RaceDetails>>? value, int level)
         {
-            value ??= [];
+            if (value == null)
+                value = new Dictionary<Distance, List<RaceDetails>>();
 
             if (++level > 4)
                 return value;
 
             var details = new RaceDetails();
             InitializeInstance(details);
-            value[Distance.foo] = [details];
+            value[Distance.foo] = new List<RaceDetails>() { details };
 
             if (value.TryGetValue(Distance.bar, out var list) && (list.Count > 0))
             {
@@ -306,16 +309,17 @@ namespace Thrift.Tests.DataModel
 
         private static List<Dictionary<sbyte, HashSet<Distance>>> ModifyValue(List<Dictionary<sbyte, HashSet<Distance>>>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new List<Dictionary<sbyte, HashSet<Distance>>>();
 
             if (value.Count == 0)
-                value.Add([]);
+                value.Add(new Dictionary<sbyte, HashSet<Distance>>());
             //else
             //value.Add(null); --Thrift does not allow null values in containers
 
             sbyte key = (sbyte)(value[0].Count + 10);
             if (value[0].Count == 0)
-                value[0].Add(key, []);
+                value[0].Add(key, new HashSet<Distance>());
             //else
             //value[0].Add(key, null); --Thrift does not allow null values in containers
 
@@ -327,7 +331,9 @@ namespace Thrift.Tests.DataModel
                     {
                         if (pair.Value != null)
                         {
-                            if (!pair.Value.Remove(Distance.baz))
+                            if (pair.Value.Contains(Distance.baz))
+                                pair.Value.Remove(Distance.baz);
+                            else
                                 pair.Value.Add(Distance.baz);
                         }
                     }
@@ -339,22 +345,25 @@ namespace Thrift.Tests.DataModel
 
         private static HashSet<List<Distance>> ModifyValue(HashSet<List<Distance>>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new HashSet<List<Distance>>();
 
             if (value.Count == 0)
-                value.Add([]);
+                value.Add(new List<Distance>());
             //else
             //value.Add(null); -- Thrift does not allow null values in containers
 
             foreach (var entry in value)
-                entry?.Add(Distance.baz);
+                if( entry != null)
+                    entry.Add(Distance.baz);
 
             return value;
         }
 
         private static Dictionary<Distance, Distance> ModifyValue(Dictionary<Distance, Distance>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new Dictionary<Distance, Distance>();
             value[Distance.foo] = value.ContainsKey(Distance.foo) ? ++value[Distance.foo] : Distance.foo;
             value[Distance.bar] = value.ContainsKey(Distance.bar) ? ++value[Distance.bar] : Distance.bar;
             value[Distance.baz] = value.ContainsKey(Distance.baz) ? ++value[Distance.baz] : Distance.baz;
@@ -363,15 +372,22 @@ namespace Thrift.Tests.DataModel
 
         private static HashSet<Distance> ModifyValue(HashSet<Distance>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new HashSet<Distance>();
 
-            if (!value.Remove(Distance.foo))
+            if (value.Contains(Distance.foo))
+                value.Remove(Distance.foo);
+            else
                 value.Add(Distance.foo);
 
-            if (!value.Remove(Distance.bar))
+            if (value.Contains(Distance.bar))
+                value.Remove(Distance.bar);
+            else
                 value.Add(Distance.bar);
 
-            if (!value.Remove(Distance.baz))
+            if (value.Contains(Distance.baz))
+                value.Remove(Distance.baz);
+            else
                 value.Add(Distance.baz);
 
             return value;
@@ -379,7 +395,8 @@ namespace Thrift.Tests.DataModel
 
         private static List<Distance> ModifyValue(List<Distance>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new List<Distance>();
             value.Add(Distance.foo);
             value.Add(Distance.bar);
             value.Add(Distance.baz);
@@ -393,32 +410,36 @@ namespace Thrift.Tests.DataModel
 
         private static Dictionary<sbyte, short> ModifyValue(Dictionary<sbyte, short>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new Dictionary<sbyte, short>();
             value.Add((sbyte)(value.Count + 10), (short)value.Count);
             return value;
         }
 
         private static HashSet<long> ModifyValue(HashSet<long>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new HashSet<long>();
             value.Add(value.Count+100);
             return value;
         }
 
         private static List<int> ModifyValue(List<int>? value)
         {
-            value ??= [];
+            if (value == null)
+                value = new List<int>();
             value.Add(value.Count);
             return value;
         }
 
         private static byte[] ModifyValue(byte[]? value)
         {
-            value ??= [0];
+            if (value == null)
+                value = new byte[1] { 0 };
             if (value.Length > 0)
                 value[0] = (value[0] < 0xFF) ? ++value[0] : (byte)0;
             else
-                value = [0];
+                value = new byte[1] { 0 };
             return value;
         }
 

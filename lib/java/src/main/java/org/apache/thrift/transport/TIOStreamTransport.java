@@ -68,7 +68,6 @@ public class TIOStreamTransport extends TEndpointTransport {
     super(config);
     inputStream_ = is;
   }
-
   /**
    * Input stream constructor, constructs an input only transport.
    *

@@ -29,19 +29,15 @@ repositories {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
     implementation("org.apache.thrift:libthrift:INCLUDED")
     testImplementation(kotlin("test"))
 }
 
 kotlin {
     jvmToolchain {
-        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(11))
     }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks {
@@ -57,7 +53,7 @@ tasks {
 
     task<Exec>("compileThrift") {
         val thriftBin = if (hasProperty("thrift.compiler")) {
-            file(property("thrift.compiler")!!)
+            file(property("thrift.compiler"))
         } else {
             project.rootDir.resolve("../../compiler/cpp/thrift")
         }

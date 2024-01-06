@@ -30,7 +30,9 @@ class ObjectSet<K:{}> {
 
     public function new( values : Array<K> = null) {
         if ( values != null) {
-            addRange(values.iterator());
+            for ( value in values) {
+                 add(value);
+            }
         }
     }
 
@@ -53,14 +55,6 @@ class ObjectSet<K:{}> {
         _size++;
         _elements.set(o,_size);
         return true;
-    }
-
-    public function addRange( values : Iterator<K>) {
-        if ( values != null) {
-            for ( value in values) {
-                 add(value);
-            }
-        }
     }
 
     public function clear() : Void {

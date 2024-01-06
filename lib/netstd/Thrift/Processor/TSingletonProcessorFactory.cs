@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -17,9 +17,6 @@
 
 using Thrift.Server;
 using Thrift.Transport;
-
-#pragma warning disable IDE0079 // net20 - unneeded suppression
-#pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Processor
 {

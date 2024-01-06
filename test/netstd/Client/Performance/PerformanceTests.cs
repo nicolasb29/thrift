@@ -28,6 +28,8 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Thrift.Transport;
 
+#pragma warning disable CS1998  // no await in async method
+
 namespace Client.Tests
 {
     public class PerformanceTests
@@ -42,7 +44,7 @@ namespace Client.Tests
         internal static async Task<int> Execute()
         {
             var instance = new PerformanceTests();
-            await instance.ProtocolPeformanceTestAsync();
+            instance.ProtocolPeformanceTestAsync().Wait();
 
             // debug only
             if (Debugger.IsAttached)
@@ -99,7 +101,7 @@ namespace Client.Tests
                 ;
 
                 if (!Transport.IsOpen)
-                    await Transport.OpenAsync();
+                    Transport.OpenAsync().Wait();
 
                 if (Activator.CreateInstance(typeof(T), Transport) is T instance)
                     return instance;

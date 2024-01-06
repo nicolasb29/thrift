@@ -42,7 +42,9 @@ namespace Thrift.Protocol.Utilities
 
         private static void SwapBytes(ref byte one, ref byte two)
         {
-            (two, one) = (one, two);
+            var tmp = one;
+            one = two;
+            two = tmp;
         }
 
         #region SelfTest
